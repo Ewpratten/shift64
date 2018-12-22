@@ -1,37 +1,71 @@
-from base64 import b64decode
-from base64 import b64encode
-import string
+from coding import *
+from mods import *
+import sys
 
-key = "5024"
-message = "Water Game 2019!"
+print(Decode(Encode(Encode("Hello","1234"),"1234"),"1234"))
 
-output = []
-key_len = len(key)
-
-for i in range(0, len(message) - 1):
-	# print(ord(message[i]) + int(key[i % key_len]))
-	output.append(chr(ord(message[i]) + int(key[i % key_len])))
-
-# print(output)
-
-code = ""
-for num in output:
-	code += str(num)
-
-code = b64encode(code.encode())
-print(code)
+if len(sys.argv) < 2:
+	print("Usage: shift64 [0/1] <message>")
+else:
+	mode = sys.argv[1]
+	inpmod = False
+	if int(mode) == 0:
+		inpmod = True
+	else:
+		print("Enter the key:")
+		key = input(">")
+		print("Enter the sequence key:")
+		ckey = input(">")
+code = str(sys.argv[2])
 
 
-# Test code
-code = "XGF2aXcgSWVyZSI2NTE7=="
-key = "5024"
+if inpmod:
+	
+	ckey = GenCycleKey()
+	cycles = int(ckey.split("@")[1])
+	key = GenKey(code)
+	
+	output = code
+	
+	for i in range(1,cycles):
+		j = 0
+		for op in ckey.split("@")[0]:
+			print(f"{j} / {i} / {cycles}", end="\r")
+			if int(op) == 0:
+				output = Encode(output, key)
+			if int(op) == 1:
+				key = ModKey(key,output)
+			if int(op) == 2:
+				output = Entropy(output)
+			if int(op) == 3:
+				key, output = Swap(key,output)
+			
+			j += 1
+	
+	print(f"Key:               \n{key}\nSequence Key:\n{ckey}\n\nMessage:\n{output}")
+	exit()
 
-output = []
-message = b64decode(code)
+# decode
+cycles = int(ckey.split("@")[1])
+output = code
+ck = []
+for char in ckey.split("@")[0]:
+	ck.append(char)
+ckey = ck
+ckey.reverse()
+for i in range(1,cycles):
+	j = 0
+	for op in ckey:
+		print(f"{j} / {i} / {cycles}", end="\r")
+		if int(op) == 0:
+			output = Decode(output, key)
+		if int(op) == 1:
+			key = UnModKey(key,output)
+		if int(op) == 2:
+			output = UnEntropy(output)
+		if int(op) == 3:
+			key, output = Swap(key,output)
+		
+		j += 1
 
-key_len = len(key)
-for i in range(0, len(message)):
-	output.append(chr(message[i] - int(key[i % key_len])))
-
-output = ''.join(output)
 print(output)
